@@ -1,0 +1,65 @@
+#include <iostream>
+#include <fstream>
+#include <complex>
+
+const int WIDTH = 800;   // Image width
+const int HEIGHT = 600;  // Image height
+const int MAX_ITER = 1000;  // Maximum number of iterations
+
+// Function to map pixel coordinates to complex plane coordinates
+std::complex<double> mapPixelToComplex(int x, int y) {
+    double scaleX = 3.5 / WIDTH;   // Adjust the scale based on the desired portion of the Mandelbrot set
+    double scaleY = 2.0 / HEIGHT;
+    double real = (x - WIDTH / 2) * scaleX;
+    double imag = (y - HEIGHT / 2) * scaleY;
+    return std::complex<double>(real, imag);
+}
+
+// Function to check if a point is in the Mandelbrot set
+int isInMandelbrotSet(std::complex<double> c) {
+    std::complex<double> z = 0;
+    int iterations = 0;
+    
+    while (iterations < MAX_ITER && std::abs(z) < 2.0) {
+        z = z * z + c;
+        iterations++;
+    }
+    
+    return iterations;
+}
+
+int main() {
+    // Create an image buffer
+    unsigned char* image = new unsigned char[WIDTH * HEIGHT * 3];
+    
+    // Iterate over each pixel and calculate the color
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            std::complex<double> c = mapPixelToComplex(x, y);
+            int iterations = isInMandelbrotSet(c);
+            
+            // Color the pixel based on the number of iterations
+            int color = 255 * iterations / MAX_ITER;
+            int offset = (x + y * WIDTH) * 3;
+            image[offset] = color;            // Red component
+            image[offset + 1] = color;        // Green component
+            image[offset + 2] = color;        // Blue component
+        }
+    }
+    
+    // Save the image to a PPM file
+    std::ofstream output("mandelbrot.ppm", std::ios::binary);
+    output << "P6\n";
+    output << WIDTH << " " << HEIGHT << "\n";
+    output << "255\n";
+    output.write(reinterpret_cast<char*>(image), WIDTH * HEIGHT * 3);
+    output.close();
+    
+    // Clean up
+    delete[] image;
+    
+    std::cout << "Mandelbrot set image generated successfully.\n";
+    
+    return 0;
+}
+
